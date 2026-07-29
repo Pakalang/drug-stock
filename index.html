@@ -496,32 +496,19 @@ window.__dconfirm=function(){
     date:new Date().toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'}),
     time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
   };
-  // ส่งผ่าน GET + Image trick (ทำงานได้ทุก browser ไม่มี CORS)
   var qs=Object.keys(payload).map(function(k){
     return encodeURIComponent(k)+'='+encodeURIComponent(payload[k]);
   }).join('&');
-  var url=SCRIPT_URL+'?'+qs;
   state.dSaving=true; render();
+  // Image GET — ไม่มี CORS ทำงานได้ทุก browser/มือถือ
   var img=new Image();
   img.onload=img.onerror=function(){
-    // ไม่ว่าจะ load หรือ error ให้ตรวจสอบด้วย GET อีกครั้ง
-    setTimeout(function(){
-      fetch(SCRIPT_URL+'?action=ping&t='+Date.now())
-        .then(function(r){return r.json();})
-        .then(function(res){
-          state.dSaving=false;
-          if(res.lastDispense && res.lastDispense===payload.drugCode){
-            state.dDone=true; load();
-          } else {
-            state.dDone=true; load();
-          }
-          render();
-        }).catch(function(){
-          state.dSaving=false; state.dDone=true; load(); render();
-        });
-    }, 1500);
+    // Apps Script redirect ทำให้ onerror เสมอ แต่ request ถึงแล้ว
+    state.dSaving=false; state.dDone=true;
+    setTimeout(function(){ load(); }, 2000);
+    render();
   };
-  img.src=url;
+  img.src=SCRIPT_URL+'?'+qs+'&t='+Date.now();
 };
 
 function bind(){
