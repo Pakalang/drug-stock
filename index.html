@@ -497,20 +497,24 @@ window.__dconfirm=function(){
     time:new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
   };
   state.dSaving=true; render();
-  fetch(SCRIPT_URL, {method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  }).then(function(r){return r.json();})
-  .then(function(res){
-    state.dSaving=false;
-    if(res.status==='ok'){ state.dDone=true; load(); }
-    else { alert('เกิดข้อผิดพลาด: '+(res.message||JSON.stringify(res))); }
+  // ใช้ no-cors form submission เพื่อเลี่ยง CORS block
+  var form=document.createElement('form');
+  form.method='POST'; form.action=SCRIPT_URL;
+  form.target='_hidden_frame'; form.style.display='none';
+  var inp=document.createElement('input');
+  inp.type='hidden'; inp.name='payload'; inp.value=JSON.stringify(payload);
+  form.appendChild(inp);
+  // hidden iframe รับ response โดยไม่ redirect หน้า
+  var frame=document.getElementById('_hidden_frame');
+  if(!frame){ frame=document.createElement('iframe'); frame.name='_hidden_frame';
+    frame.style.display='none'; document.body.appendChild(frame); }
+  frame.onload=function(){
+    state.dSaving=false; state.dDone=true;
+    setTimeout(function(){ load(); },500);
     render();
-  }).catch(function(e){
-    state.dSaving=false;
-    alert('เชื่อมต่อ Apps Script ไม่ได้: '+e.message);
-    render();
-  });
+  };
+  document.body.appendChild(form); form.submit();
+  document.body.removeChild(form);
 };
 
 function bind(){
