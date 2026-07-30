@@ -500,15 +500,18 @@ window.__dconfirm=function(){
     return encodeURIComponent(k)+'='+encodeURIComponent(payload[k]);
   }).join('&');
   state.dSaving=true; render();
-  // Image GET — ไม่มี CORS ทำงานได้ทุก browser/มือถือ
-  var img=new Image();
-  img.onload=img.onerror=function(){
-    // Apps Script redirect ทำให้ onerror เสมอ แต่ request ถึงแล้ว
-    state.dSaving=false; state.dDone=true;
-    setTimeout(function(){ load(); }, 2000);
-    render();
-  };
-  img.src=SCRIPT_URL+'?'+qs+'&t='+Date.now();
+  // no-cors fetch — ส่ง request ถึง Apps Script แน่นอน ไม่อ่าน response (ไม่ติด CORS)
+  fetch(SCRIPT_URL+'?'+qs+'&t='+Date.now(), {mode:'no-cors'})
+    .then(function(){
+      state.dSaving=false; state.dDone=true;
+      setTimeout(function(){ load(); }, 5000);
+      render();
+    })
+    .catch(function(){
+      state.dSaving=false; state.dDone=true;
+      setTimeout(function(){ load(); }, 5000);
+      render();
+    });
 };
 
 function bind(){
