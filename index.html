@@ -153,15 +153,19 @@ function buildFromCsv(master, lots){
     order.push(code);
   });
   lots.forEach(function(r){
-    var code=String(r['รหัสยา']||'').trim(); if(!code||!drugs[code]) return;
-    var qty=num(r['คงเหลือ']); var lotNo=String(r['LOT']||'').trim();
+    // อ่านด้วย index เพราะคอลัมน์ B (ชื่อยา) เป็นสูตร ทำให้ header ว่าง
+    // A=0รหัส B=1ชื่อ C=2LOT D=3Exp E=4กล่อง F=5จำนวน/กล่อง G=6คงเหลือ H=7หน่วยนับ I=8ราคา/LOT J=9วันรับเข้า
+    var vals=Object.values ? Object.values(r) : Object.keys(r).map(function(k){return r[k];});
+    var code=String(vals[0]||'').trim(); if(!code||!drugs[code]) return;
+    var lotNo=String(vals[2]||'').trim();
+    var qty=num(vals[6]);
     if(qty<=0 && !lotNo) return;
-    var boxes=num(r['จำนวนกล่อง'])||null;
-    var perBox=num(r['จำนวน/กล่อง'])||null;
-    var lotPrice=num(r['ราคา/แพ็ก (LOT)'])||null;
-    var recvDate=normDate(r['วันรับเข้า']);
-    var unitName=String(r['หน่วยนับ (อัตโนมัติ)']||'').trim()||drugs[code].unit;
-    drugs[code].lots.push({lot:lotNo||null, exp:normDate(r['วันหมดอายุ']),
+    var boxes=num(vals[4])||null;
+    var perBox=num(vals[5])||null;
+    var unitName=String(vals[7]||'').trim()||drugs[code].unit;
+    var lotPrice=num(vals[8])||null;
+    var recvDate=normDate(vals[9]);
+    drugs[code].lots.push({lot:lotNo||null, exp:normDate(vals[3]),
       qty:qty, boxes:boxes, perBox:perBox, lotPrice:lotPrice,
       recvDate:recvDate, unit:unitName});
     drugs[code].total+=qty;
